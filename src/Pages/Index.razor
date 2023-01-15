@@ -1,0 +1,127 @@
+﻿@page "/"
+@page "/{PastaId}"
+@using Blazorbin.Services
+@using Blazorbin.Data
+@using TinyMCE.Blazor
+
+@inject DbService _dbService
+@inject NavigationManager _navigationManager
+
+<style>
+    .linguiee {
+      padding: 12px 20px;
+      margin: 8px 0;
+      box-sizing: border-box;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: large;
+      width: 80%;
+    }
+    .linguiee:focus {
+      border: 2px solid #555;
+    }
+    .linguiee-btn {
+      padding: 12px 20px;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-family: 'Open Sans', sans-serif;
+      font-size: larger;
+      cursor: pointer;
+      width: 20%;
+      height: 90%;
+      margin-top: 8px;
+    }
+    .linguiee-btn:hover {
+      background-color: #45a049;
+    }
+    
+    .linguiee-secondary-btn {
+      padding: 12px 20px;
+      background-color: #f44336;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-family: 'Open Sans', sans-serif;
+      font-size: larger;
+      cursor: pointer;
+      width: 20%;
+      height: 90%;
+      margin-top: 8px;
+    }
+    .linguiee-secondary-btn:hover {
+      background-color: #da190b;
+    }
+</style>
+
+<div style="display: flex; flex-direction: row; width: 100%;">
+    <input class="linguiee" @bind="_pastaBin.Title"/>
+    @if (_editable)
+     {
+         <button class="linguiee-btn" @onclick="UpdatePasta">Update</button>
+         <button class="linguiee-secondary-btn" @onclick="ReloadNew">New</button>
+     }
+     else
+     {
+         <button class="linguiee-btn" @onclick="CreatePasta">Save</button>
+     }
+</div>
+<Editor @bind-Value="@_pastaBin.Content" ScriptSrc="js/tinymce.min.js" />
+
+@code
+{
+    [Parameter]
+    public string? PastaId { get; set; }
+    
+    private PastaBin _pastaBin = new(){Title = "Untitled", Content = ""};
+    
+    private bool _editable;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(PastaId != null)
+        {
+            _pastaBin = await _dbService.GetPasta(PastaId);
+            _editable = true;
+        }
+        else
+        {
+            _pastaBin = new PastaBin()
+            {
+                Title = "Untitled",
+                Content = "This is my pasta!"
+            };
+        }
+        
+        await base.OnInitializedAsync();
+    }
+
+    private async Task ReloadNew()
+    {
+        _pastaBin = new PastaBin()
+        {
+            Title = "Untitled",
+            Content = "This is my pasta!"
+        };
+        
+        _editable = false;
+        _navigationManager.NavigateTo("/");
+    }
+
+    private async Task CreatePasta()
+    {
+        var result = await _dbService.CreatePasta(_pastaBin);
+        
+        _editable = true;
+        _navigationManager.NavigateTo("/" + result.Id);
+    }
+
+    private async Task UpdatePasta()
+    {
+        _dbService.UpdatePasta(_pastaBin);
+
+        await Task.CompletedTask;
+    }
+}
