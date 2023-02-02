@@ -85,7 +85,7 @@
     main {
       background-color: white;
       flex: 1;
-      padding: 1rem;
+      /*padding: 1rem;*/
       overflow: auto;
     }
     
@@ -104,14 +104,12 @@
 
 <div class="container">
     <div class="container-row">
-      <nav class="sidebar">
-        <ul>
-            <li><a href="#">Home</a></li>
+      <nav class="sidebar" style="gap: 5px;">
+          <button style="width:100%; padding: 5px; background-color: transparent;" class="linguiee-btn" @onclick="() => GoToPasta(string.Empty)">Home</button>
             @foreach(var pasta in _pastas)
             {
-                <li><button @onclick="() => GoToPasta(pasta.Id.ToString())">@pasta.Title</button></li>
+                <button style="width:100%; padding: 5px; background-color: transparent;" class="linguiee-btn" @onclick="() => GoToPasta(pasta.Id.ToString())">@pasta.Title</button>
             }
-        </ul>
       </nav>
         <main>
             <input class="linguiee" @bind="_pastaBin.Title"/>
@@ -124,7 +122,7 @@
             {
                 <button class="linguiee-btn" @onclick="CreatePasta">Save</button>
             }
-            <Editor @bind-Value="@_pastaBin.Content" ScriptSrc="js/tinymce.min.js" />
+            <Editor @bind-Value="@_pastaBin.Content" ScriptSrc="js/tinymce.min.js" style="height: 100%;" />
         </main>
     </div>
 </div>
