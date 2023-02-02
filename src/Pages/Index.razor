@@ -7,33 +7,32 @@
 @inject DbService _dbService
 @inject NavigationManager _navigationManager
 
-<style>
+<style>    
     .linguiee {
       padding: 12px 20px;
       margin: 8px 0;
       box-sizing: border-box;
       border: 2px solid #ccc;
       border-radius: 4px;
-      font-family: 'Open Sans', sans-serif;
-      font-size: large;
       width: 80%;
     }
+    
     .linguiee:focus {
       border: 2px solid #555;
     }
+    
     .linguiee-btn {
       padding: 12px 20px;
       background-color: #4CAF50;
       border: none;
       border-radius: 4px;
       color: white;
-      font-family: 'Open Sans', sans-serif;
-      font-size: larger;
       cursor: pointer;
-      width: 20%;
-      height: 90%;
+      /*width: 20%;*/
+      /*height: 90%;*/
       margin-top: 8px;
     }
+    
     .linguiee-btn:hover {
       background-color: #45a049;
     }
@@ -44,31 +43,91 @@
       border: none;
       border-radius: 4px;
       color: white;
-      font-family: 'Open Sans', sans-serif;
-      font-size: larger;
       cursor: pointer;
-      width: 20%;
-      height: 90%;
+      /*width: 20%;*/
+      /*height: 90%;*/
       margin-top: 8px;
     }
+    
     .linguiee-secondary-btn:hover {
       background-color: #da190b;
     }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .container-row {
+        display: flex;
+        flex-direction: row;
+    }
+    
+    header, footer {
+      background-color: lightgray;
+      /*padding: 1rem;*/
+      text-align: center;
+    }
+    
+    .sidebar {
+      background-color: #333;
+      /*padding: 1rem;*/
+      width: 15%;
+      flex: 0 0 auto;
+      color: white;
+    }
+    
+    .sidebar a {
+        color:white;
+    }
+    
+    main {
+      background-color: white;
+      flex: 1;
+      padding: 1rem;
+      overflow: auto;
+    }
+    
+    @@media (max-width: 767px) {
+      .container {
+        flex-direction: column;
+      }
+    
+      .sidebar {
+        width: 100%;
+        height: auto;
+      }
+    }
+
 </style>
 
-<div style="display: flex; flex-direction: row; width: 100%;">
-    <input class="linguiee" @bind="_pastaBin.Title"/>
-    @if (_editable)
-     {
-         <button class="linguiee-btn" @onclick="UpdatePasta">Update</button>
-         <button class="linguiee-secondary-btn" @onclick="ReloadNew">New</button>
-     }
-     else
-     {
-         <button class="linguiee-btn" @onclick="CreatePasta">Save</button>
-     }
+<div class="container">
+    <div class="container-row">
+      <nav class="sidebar">
+        <ul>
+            <li><a href="#">Home</a></li>
+            @foreach(var pasta in _pastas)
+            {
+                <li><button @onclick="() => GoToPasta(pasta.Id.ToString())">@pasta.Title</button></li>
+            }
+        </ul>
+      </nav>
+        <main>
+            <input class="linguiee" @bind="_pastaBin.Title"/>
+            @if (_editable)
+            {
+                <button class="linguiee-btn" @onclick="UpdatePasta">Update</button>
+                <button class="linguiee-secondary-btn" @onclick="ReloadNew">New</button>
+            }
+            else
+            {
+                <button class="linguiee-btn" @onclick="CreatePasta">Save</button>
+            }
+            <Editor @bind-Value="@_pastaBin.Content" ScriptSrc="js/tinymce.min.js" />
+        </main>
+    </div>
 </div>
-<Editor @bind-Value="@_pastaBin.Content" ScriptSrc="js/tinymce.min.js" />
 
 @code
 {
@@ -78,6 +137,8 @@
     private PastaBin _pastaBin = new(){Title = "Untitled", Content = ""};
     
     private bool _editable;
+    
+    private List<PastaBin> _pastas = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,6 +159,19 @@
         await base.OnInitializedAsync();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (firstRender)
+        {
+            _pastas = await _dbService.GetAllPastas();
+
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+
     private async Task ReloadNew()
     {
         _pastaBin = new PastaBin()
@@ -108,6 +182,11 @@
         
         _editable = false;
         _navigationManager.NavigateTo("/");
+    }
+    
+    private void GoToPasta(string id)
+    {
+        _navigationManager.NavigateTo("/" + id);
     }
 
     private async Task CreatePasta()

@@ -22,6 +22,13 @@ public class DbService
         var result = await _pastaBins.FindAsync(filter);
         return result.FirstOrDefault();
     }
+
+    public async Task<List<PastaBin>> GetAllPastas()
+    {
+        var result = await _pastaBins.FindAsync(_ => true);
+        return result.ToList();
+    }
+    
     
     public async Task<PastaBin> CreatePasta(PastaBin pastaBin)
     {
