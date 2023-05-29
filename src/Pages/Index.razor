@@ -4,8 +4,8 @@
 @using Blazorbin.Data
 @using TinyMCE.Blazor
 
-@inject DbService _dbService
-@inject NavigationManager _navigationManager
+@inject DbService DbService
+@inject NavigationManager NavigationManager
 
 <style>    
     .linguiee {
@@ -105,7 +105,7 @@
 <div class="container">
     <div class="container-row">
       <nav class="sidebar" style="gap: 5px;">
-          <button style="width:100%; padding: 5px; background-color: transparent;" class="linguiee-btn" @onclick="() => GoToPasta(string.Empty)">Home</button>
+          <button style="width:100%; padding: 5px; background-color: transparent;" class="linguiee-btn" @onclick="() => GoToPasta(string.Empty)">Home (RenderCount: @_renderCount)</button>
             @foreach(var pasta in _pastas)
             {
                 <button style="width:100%; padding: 5px; background-color: transparent;" class="linguiee-btn" @onclick="() => GoToPasta(pasta.Id.ToString())">@pasta.Title</button>
@@ -136,13 +136,20 @@
     
     private bool _editable;
     
+    private int _renderCount = 0;
+    
     private List<PastaBin> _pastas = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        _renderCount++;
+
+        // optimistic load this later
+        _pastas = await DbService.GetAllPastas();
+        
         if(PastaId != null)
         {
-            _pastaBin = await _dbService.GetPasta(PastaId);
+            _pastaBin = await DbService.GetPasta(PastaId);
             _editable = true;
         }
         else
@@ -154,23 +161,10 @@
             };
         }
         
-        await base.OnInitializedAsync();
+        await base.OnParametersSetAsync();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await base.OnAfterRenderAsync(firstRender);
-
-        if (firstRender)
-        {
-            _pastas = await _dbService.GetAllPastas();
-
-            InvokeAsync(StateHasChanged);
-        }
-    }
-
-
-    private async Task ReloadNew()
+    private Task ReloadNew()
     {
         _pastaBin = new PastaBin()
         {
@@ -179,25 +173,34 @@
         };
         
         _editable = false;
-        _navigationManager.NavigateTo("/");
+        NavigationManager.NavigateTo("/");
+        
+        StateHasChanged();
+        
+        return Task.CompletedTask;
     }
     
-    private void GoToPasta(string id)
+    private Task GoToPasta(string id)
     {
-        _navigationManager.NavigateTo("/" + id);
+        NavigationManager.NavigateTo("/" + id);
+        
+        StateHasChanged();
+        
+        return Task.CompletedTask;
     }
 
     private async Task CreatePasta()
     {
-        var result = await _dbService.CreatePasta(_pastaBin);
+        var result = await DbService.CreatePasta(_pastaBin);
         
         _editable = true;
-        _navigationManager.NavigateTo("/" + result.Id);
+        
+        await GoToPasta(result.Id.ToString());
     }
 
     private async Task UpdatePasta()
     {
-        _dbService.UpdatePasta(_pastaBin);
+        await DbService.UpdatePasta(_pastaBin);
 
         await Task.CompletedTask;
     }

@@ -1,4 +1,5 @@
 ﻿using Blazorbin.Data;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace Blazorbin.Services;
@@ -9,11 +10,11 @@ public class DbService
     private readonly IMongoCollection<PastaBin> _pastaBins;
     private readonly MongoClient _client;
     
-    public DbService()
+    public DbService(IOptions<DbConfig> config)
     {
-        _client = new MongoClient("mongodb://localhost:27017");
-        _db = _client.GetDatabase("Pasta");
-        _pastaBins = _db.GetCollection<PastaBin>("PastaBins");
+        _client = new MongoClient(config.Value.ConnectionString);
+        _db = _client.GetDatabase(config.Value.DatabaseName);
+        _pastaBins = _db.GetCollection<PastaBin>(config.Value.CollectionName);
     }
     
     public async Task<PastaBin> GetPasta(string id)

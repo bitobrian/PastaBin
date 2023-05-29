@@ -7,6 +7,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<DbService>();
 
+builder.Services.Configure<DbConfig>(builder.Configuration.GetSection(nameof(DbConfig)));
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
